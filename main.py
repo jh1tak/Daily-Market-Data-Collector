@@ -15,7 +15,7 @@ notion = Client(auth=NOTION_TOKEN)
 tickers = {
     "QLD": "QLD",
     "SSO": "SSO",
-    "USD": "DX-Y.NYB",
+    "USD": "USD",
     "VIX": "^VIX"
 }
 ma_windows = [20, 60, 120, 200]
@@ -74,6 +74,12 @@ def get_fear_and_greed():
         url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/"
         headers = {"User-Agent": "Mozilla/5.0"}
         r = requests.get(url, headers=headers, timeout=10)
+
+        if r.status_code != 200 or not r.content.strip():
+            print(f"[ERROR] 응답 이상: status={r.status_code}")
+            print("본문 내용:", r.text)
+            return None
+
         data = r.json()
         score = data["fear_and_greed"]["score"]
         return int(score)
