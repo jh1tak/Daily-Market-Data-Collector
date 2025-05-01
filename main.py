@@ -1,4 +1,5 @@
 import os
+import time
 import yfinance as yf
 import pandas as pd
 import requests
@@ -23,6 +24,7 @@ ma_windows = [20, 60, 120, 200]
 # ========= 이동평균 수집 =========
 def get_moving_averages(ticker, ma_list):
     try:
+        time.sleep(5)
         df = yf.download(ticker, period="300d", auto_adjust=False)["Close"]
     except Exception as e:
         print(f"[ERROR] {ticker} 다운로드 실패: {e}")
@@ -50,6 +52,7 @@ def get_moving_averages(ticker, ma_list):
 # ========= 주봉 RSI =========
 def get_weekly_rsi(ticker, period=14):
     try:
+        time.sleep(5)
         df = yf.download(ticker, period="1y", interval="1wk", auto_adjust=False)["Close"]
     except Exception as e:
         print(f"[ERROR] {ticker} RSI 다운로드 실패: {e}")
@@ -72,7 +75,11 @@ def get_weekly_rsi(ticker, period=14):
 def get_fear_and_greed():
     try:
         url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/"
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+            "Accept-Language": "en-US,en;q=0.9"
+        }
         r = requests.get(url, headers=headers, timeout=10)
 
         if r.status_code != 200 or not r.content.strip():
@@ -119,6 +126,7 @@ for name, code in tickers.items():
     if name == "VIX":
         rsi = get_weekly_rsi(code)
         try:
+            time.sleep(5)
             price_df = yf.download(code, period="5d", auto_adjust=False)["Close"]
             price = round(float(price_df.iloc[-1]), 2) if not price_df.empty else None
         except Exception:
