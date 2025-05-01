@@ -66,21 +66,17 @@ def get_weekly_rsi(ticker, period=14):
     avg_loss = loss.rolling(window=period).mean()
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
-    return round(rsi.iloc[-1], 2)
+    return float(round(rsi.iloc[-1], 2))
 
-# ========= 공포지수 =========
+# ========= CNN JSON API 공포지수 =========
 def get_fear_and_greed():
     try:
-        url = "https://edition.cnn.com/markets/fear-and-greed"
+        url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata/"
         headers = {"User-Agent": "Mozilla/5.0"}
         r = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(r.text, "html.parser")
-        val_tag = soup.find("div", class_="FearGreedGraph__Dial-value")
-        if val_tag:
-            return int(val_tag.text.strip())
-        else:
-            print("[ERROR] 공포지수 HTML 구조 변경 또는 데이터 없음")
-            return None
+        data = r.json()
+        score = data["fear_and_greed"]["score"]
+        return int(score)
     except Exception as e:
         print(f"[ERROR] 공포지수 수집 실패: {e}")
         return None
