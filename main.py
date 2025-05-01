@@ -1,3 +1,5 @@
+print(f"TOKEN={NOTION_TOKEN}, DB={NOTION_DATABASE_ID}")
+
 import yfinance as yf
 import pandas as pd
 import requests
