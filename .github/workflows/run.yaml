@@ -2,12 +2,13 @@ name: Daily Market Data Collector
 
 on:
   schedule:
-    - cron: '0 22 * * *'  # 오전 7시 (KST)
-    - cron: '0 7 * * *'   # 오후 4시 (KST)
+    - cron: '0 7 * * *'  # 매일 오후 4시 실행 (KST 기준 → UTC 7시)
   workflow_dispatch:
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -19,12 +20,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Debug print secrets
-        run: echo "TOKEN=$NOTION_TOKEN / DB=$NOTION_DATABASE_ID"
-        env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
 
       - name: Run main script
         env:
