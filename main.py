@@ -1,19 +1,21 @@
-print(f"TOKEN={NOTION_TOKEN}, DB={NOTION_DATABASE_ID}")
-
+import os
 import yfinance as yf
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import os
 from datetime import datetime
 from notion_client import Client
 
-# ========== 환경 변수 ==========
+# 환경 변수
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
 notion = Client(auth=NOTION_TOKEN)
 
-# ========== 기본 설정 ==========
+# 디버깅 출력
+print(f"TOKEN={NOTION_TOKEN}")
+print(f"DB={NOTION_DATABASE_ID}")
+
+# 기본 설정
 tickers = {
     "QLD": "QLD",
     "SSO": "SSO",
@@ -22,7 +24,7 @@ tickers = {
 }
 ma_windows = [20, 60, 120, 200]
 
-# ========== 보조 함수 ==========
+# 이동평균 수집
 def get_moving_averages(ticker, ma_list):
     try:
         df = yf.download(ticker, period="300d", auto_adjust=False)["Close"]
@@ -43,6 +45,7 @@ def get_moving_averages(ticker, ma_list):
 
     return result
 
+# 주봉 RSI 수집
 def get_weekly_rsi(ticker, period=14):
     try:
         df = yf.download(ticker, period="1y", interval="1wk", auto_adjust=False)["Close"]
@@ -63,6 +66,7 @@ def get_weekly_rsi(ticker, period=14):
     rsi = 100 - (100 / (1 + rs))
     return round(rsi.iloc[-1], 2)
 
+# 공포지수 수집
 def get_fear_and_greed():
     try:
         url = "https://edition.cnn.com/markets/fear-and-greed"
@@ -79,9 +83,10 @@ def get_session_tag():
     hour = datetime.now().hour
     return "오전" if hour < 12 else "오후"
 
-# ========== Notion 전송 ==========
+# Notion 전송
 def send_to_notion(data: dict):
     if data is None:
+        print(f"[SKIP] 데이터 없음 → 전송 생략")
         return
 
     properties = {
@@ -103,11 +108,11 @@ def send_to_notion(data: dict):
 
     try:
         notion.pages.create(parent={"database_id": NOTION_DATABASE_ID}, properties=properties)
-        print(f"[INFO] {data['종목명']} 저장 성공")
+        print(f"[SUCCESS] {data['종목명']} 저장 완료")
     except Exception as e:
         print(f"[ERROR] Notion 저장 실패 ({data['종목명']}): {e}")
 
-# ========== 실행 ==========
+# 실행
 for name, code in tickers.items():
     if name == "VIX":
         rsi = get_weekly_rsi(code)
