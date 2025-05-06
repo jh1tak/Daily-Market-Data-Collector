@@ -34,17 +34,13 @@ def get_moving_averages(code, ma_windows):
         result[f"MA{window}"] = round(float(ma_value), 2)
     return result
 
-# ========= 주봉 RSI =========
-def get_weekly_rsi(code):
-    df = yf.download(code, period="1y", interval="1wk", auto_adjust=False)["Close"]
-    if df.empty:
-        print(f"Warning: {code}의 주봉 데이터가 비어 있음")
-        return None
-    delta = df.diff()
+# ========= RSI 계산 =========
+def get_rsi(series, period=14):
+    delta = series.diff()
     gain = delta.where(delta > 0, 0.0)
     loss = -delta.where(delta < 0, 0.0)
-    avg_gain = gain.rolling(window=14).mean()
-    avg_loss = loss.rolling(window=14).mean()
+    avg_gain = gain.rolling(window=period).mean()
+    avg_loss = loss.rolling(window=period).mean()
     rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
     return round(float(rsi.iloc[-1]), 2)
@@ -87,9 +83,14 @@ def send_to_notion(name, data):
 for name, code in tickers.items():
     ma_data = get_moving_averages(code, ma_windows)
     time.sleep(5)
-    rsi = get_weekly_rsi(code)
-    if rsi is not None:
-        ma_data["주봉RSI"] = rsi
+    daily_df = yf.download(code, period="1mo", interval="1d", auto_adjust=False)["Close"]
+    weekly_df = yf.download(code, period="1y", interval="1wk", auto_adjust=False)["Close"]
+
+    if not daily_df.empty:
+        ma_data["RSI"] = get_rsi(daily_df)
+    if not weekly_df.empty:
+        ma_data["주봉RSI"] = get_rsi(weekly_df)
+
     send_to_notion(name, ma_data)
     time.sleep(5)
 
